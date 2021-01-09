@@ -5,6 +5,8 @@ const sharp = require('sharp')
 const rembgHost = process.env.REMBG_HOST || 'rembg'
 const rembgUrl = 'http://' + rembgHost + ':5000/?url='
 
+const nr = require('newrelic') // application monitoring
+
 async function processPhoto(ctx) {
     try {
         bot.telegram.sendChatAction(ctx.message.chat.id, 'typing')
@@ -28,7 +30,28 @@ async function processPhoto(ctx) {
     }
 }
 
+async function newrelicMiddleware(ctx, next) {
+    const wrapper = async () => {
+        const transaction = nr.getTransaction()
+        const message = ctx.update.message
+        if (message) {
+            nr.recordCustomEvent('message', { update_id: ctx.update.update_id, from_user: message.from.username, text: message.text })
+        }
+        try {
+            await next(ctx)
+        } catch (error) {
+            console.error(error)
+            nr.noticeError(error)
+        }
+        transaction.end()
+    }
+    console.log(ctx.updateType)
+    await nr.startWebTransaction(ctx.updateType, wrapper)
+}
+
+
 const bot = new Telegraf(process.env.BOT_TOKEN)
+bot.use(newrelicMiddleware)
 bot.start(ctx => ctx.reply('Welcome! Send an picture to remove background'))
 bot.on('photo', processPhoto)
 bot.launch()
