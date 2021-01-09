@@ -1,5 +1,5 @@
 const { Telegraf } = require('telegraf')
-const request = require('request')
+const got = require('got')
 const sharp = require('sharp')
 
 const rembgHost = process.env.REMBG_HOST || 'rembg'
@@ -18,8 +18,12 @@ async function processPhoto(ctx) {
         console.log(photoUrl)
 
         const processedUrl = rembgUrl + photoUrl
-        const processedPhoto = request(processedUrl)
-            .pipe(sharp().trim().resize({ width: 512, height: 512, fit: 'inside' } ).png())
+        const photoBuffer = await got(processedUrl, { responseType: 'buffer', resolveBodyOnly: true });
+        const processedPhoto = await sharp(photoBuffer)
+            .trim()
+            .resize({ width: 512, height: 512, fit: 'inside' })
+            .png()
+            .toBuffer();
         const stickerFile = await ctx.uploadStickerFile({ source: processedPhoto })
         console.log(stickerFile)
         const stickerSetName = 'r' + new Date().getTime() + '_by_rembgbot';
