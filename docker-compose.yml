@@ -1,0 +1,14 @@
+version: "3"
+services:
+    rembg:
+        container_name: rembg
+        image: danielgatis/rembg
+        entrypoint: rembg-server
+    bot:
+        container_name: rembgbot
+        restart: always
+        build: ./
+        environment:
+          - "BOT_TOKEN=${BOT_TOKEN}"
+        depends_on:
+          - "rembg"

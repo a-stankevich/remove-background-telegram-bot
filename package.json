@@ -1,0 +1,24 @@
+{
+  "name": "remove-background-telegram-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/a-stankevich/remove-background-telegram-bot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/a-stankevich/remove-background-telegram-bot/issues"
+  },
+  "homepage": "https://github.com/a-stankevich/remove-background-telegram-bot#readme",
+  "devDependencies": {
+    "request": "^2.88.2",
+    "sharp": "^0.27.0",
+    "telegraf": "^3.38.0"
+  }
+}
