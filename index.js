@@ -25,9 +25,9 @@ async function processPhoto(ctx) {
         if (photoInfo.width > 512 || photoInfo.height > 512) {
             processedPhoto = await sharp(processedPhoto)
                 .resize({ width: 512, height: 512, fit: 'inside' })
-                .toBuffer();
-        } else if (photoInfo.width < 512) {
-            const left_padding = (512 - photoInfo.width) / 2
+                .toBuffer()
+        } else if (photoInfo.width < 512 && photoInfo.height < 512) {
+            const left_padding = Math.floor((512 - photoInfo.width) / 2)
             const right_padding = 512 - photoInfo.width - left_padding
             processedPhoto = await sharp(processedPhoto)
                 .extend({
@@ -36,13 +36,13 @@ async function processPhoto(ctx) {
                     left: left_padding,
                     right: right_padding,
                     background: { r: 0, g: 0, b: 0, alpha: 0 }
-                  })
+                })
                 .toBuffer()
         }
 
         processedPhoto = await sharp(processedPhoto)
             .png()
-            .toBuffer();
+            .toBuffer()
 
         const stickerFile = await ctx.uploadStickerFile({ source: processedPhoto })
         console.log(stickerFile)
@@ -75,7 +75,6 @@ async function newrelicMiddleware(ctx, next) {
         }
         transaction.end()
     }
-    console.log(ctx.updateType)
     await nr.startWebTransaction(ctx.updateType, wrapper)
 }
 
