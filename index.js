@@ -19,18 +19,40 @@ async function processPhoto(ctx) {
 
         const processedUrl = rembgUrl + photoUrl
         const photoBuffer = await got(processedUrl, { responseType: 'buffer', resolveBodyOnly: true });
-        const processedPhoto = await sharp(photoBuffer)
+        let { data: processedPhoto, info: photoInfo } = await sharp(photoBuffer)
             .trim()
-            .resize({ width: 512, height: 512, fit: 'inside' })
+            .toBuffer({ resolveWithObject: true });
+        if (photoInfo.width > 512 || photoInfo.height > 512) {
+            processedPhoto = await sharp(processedPhoto)
+                .resize({ width: 512, height: 512, fit: 'inside' })
+                .toBuffer();
+        } else if (photoInfo.width < 512) {
+            const left_padding = (512 - photoInfo.width) / 2
+            const right_padding = 512 - photoInfo.width - left_padding
+            processedPhoto = await sharp(processedPhoto)
+                .extend({
+                    top: 0,
+                    bottom: 0,
+                    left: left_padding,
+                    right: right_padding,
+                    background: { r: 0, g: 0, b: 0, alpha: 0 }
+                  })
+                .toBuffer()
+        }
+
+        processedPhoto = await sharp(processedPhoto)
             .png()
             .toBuffer();
+
         const stickerFile = await ctx.uploadStickerFile({ source: processedPhoto })
         console.log(stickerFile)
-        const stickerSetName = 'r' + new Date().getTime() + '_by_rembgbot';
+        const botName = ctx.botInfo.username
+        const stickerSetName = 'r' + new Date().getTime() + '_by_' + botName;
         await ctx.createNewStickerSet(stickerSetName, '@rembgbot', { png_sticker: stickerFile.file_id, emojis: '❤️' })
         await ctx.replyWithMarkdown('[Add Sticker](https://t.me/addstickers/' + stickerSetName + ')')
     } catch (error) {
         ctx.reply('' + error)
+        throw error;
     }
 }
 
@@ -39,7 +61,11 @@ async function newrelicMiddleware(ctx, next) {
         const transaction = nr.getTransaction()
         const message = ctx.update.message
         if (message) {
-            nr.recordCustomEvent('message', { update_id: ctx.update.update_id, from_user: message.from.username, text: message.text })
+            nr.addCustomAttributes({
+                update_id: ctx.update.update_id,
+                from_user: message.from.username,
+                text: message.text
+            })
         }
         try {
             await next(ctx)
@@ -52,7 +78,6 @@ async function newrelicMiddleware(ctx, next) {
     console.log(ctx.updateType)
     await nr.startWebTransaction(ctx.updateType, wrapper)
 }
-
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.use(newrelicMiddleware)
