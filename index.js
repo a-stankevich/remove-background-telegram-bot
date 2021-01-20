@@ -2,6 +2,11 @@ const { Telegraf } = require('telegraf')
 const got = require('got')
 const sharp = require('sharp')
 
+if (!process.env.BOT_TOKEN) {
+    console.error('BOT_TOKEN environment variable not found')
+    return;
+}
+
 const rembgHost = process.env.REMBG_HOST || 'rembg'
 const rembgUrl = 'http://' + rembgHost + ':5000/?url='
 
@@ -43,6 +48,7 @@ async function processPhoto(ctx) {
         processedPhoto = await sharp(processedPhoto)
             .png()
             .toBuffer()
+        await ctx.replyWithPhoto({ source: processedPhoto })
 
         const stickerFile = await ctx.uploadStickerFile({ source: processedPhoto })
         console.log(stickerFile)
