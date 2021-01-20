@@ -48,7 +48,7 @@ async function processPhoto(ctx) {
         processedPhoto = await sharp(processedPhoto)
             .png()
             .toBuffer()
-        await ctx.replyWithPhoto({ source: processedPhoto })
+        await ctx.replyWithPhoto({ source: photoBuffer })
 
         const stickerFile = await ctx.uploadStickerFile({ source: processedPhoto })
         console.log(stickerFile)
