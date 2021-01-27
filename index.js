@@ -1,6 +1,7 @@
 const { Telegraf } = require('telegraf')
 const got = require('got')
 const sharp = require('sharp')
+const { telegrafThrottler } = require('telegraf-throttler')
 
 if (!process.env.BOT_TOKEN) {
     console.error('BOT_TOKEN environment variable not found')
@@ -86,6 +87,22 @@ async function newrelicMiddleware(ctx, next) {
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.use(newrelicMiddleware)
+
+const throttler = telegrafThrottler({
+    group: {
+        minTime: 500
+    },
+    in: {
+        highWater: 100,
+        minTime: 500
+    },
+    out: {
+        highWater: 100,
+        minTime: 500
+    },
+    onThrottlerError: err => nr.noticeError(err)
+})
+bot.use(throttler)
 bot.start(ctx => ctx.reply('Welcome! Send an picture to remove background'))
 bot.on('photo', processPhoto)
 bot.launch()
