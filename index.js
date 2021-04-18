@@ -103,6 +103,6 @@ const throttler = telegrafThrottler({
     onThrottlerError: err => nr.noticeError(err)
 })
 bot.use(throttler)
-bot.start(ctx => ctx.reply('Welcome! Send an picture to remove background'))
+bot.start(ctx => ctx.reply('Welcome! Send a picture to remove background'))
 bot.on('photo', processPhoto)
 bot.launch()
